@@ -14,8 +14,14 @@ contract Harness is LzSender, LzReceiver {
         bytes adapterParams;
     }
 
+    struct Receipt {
+        address sender;
+        bytes source;
+        bytes payload;
+    }
+
     mapping(uint16 => Message[]) public sent;
-    mapping(uint16 => mapping(bytes => mapping(uint64 => bytes))) public received;
+    mapping(uint16 => mapping(bytes => mapping(uint64 => Receipt))) public received;
 
     constructor(address _lzEndpoint) LzCommon(_lzEndpoint) Ownable(msg.sender) {}
 
@@ -32,6 +38,6 @@ contract Harness is LzSender, LzReceiver {
         uint64 _nonce,
         bytes memory _payload
     ) internal override {
-        received[_srcChainId][_srcAddress][_nonce] = _payload;
+        received[_srcChainId][_srcAddress][_nonce] = Receipt(msg.sender, _srcAddress, _payload);
     }
 }
