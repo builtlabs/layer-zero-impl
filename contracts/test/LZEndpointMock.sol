@@ -109,6 +109,16 @@ contract LZEndpointMock is ILayerZeroEndpoint {
         defaultAdapterParams = LzLib.buildDefaultAdapterParams(200000);
     }
 
+    event Sending(
+        uint16 chainId,
+        bytes path,
+        bytes payload,
+        address refundAddress,
+        address zroPaymentAddress,
+        bytes adapterParams,
+        uint256 nativeFee
+    );
+
     // ------------------------------ ILayerZeroEndpoint Functions ------------------------------
     function send(
         uint16 _chainId,
@@ -119,6 +129,8 @@ contract LZEndpointMock is ILayerZeroEndpoint {
         bytes memory _adapterParams
     ) external payable override sendNonReentrant {
         require(_path.length == 40, "LayerZeroMock: incorrect remote address size"); // only support evm chains
+
+        emit Sending(_chainId, _path, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
 
         address dstAddr;
         assembly {
@@ -297,6 +309,16 @@ contract LZEndpointMock is ILayerZeroEndpoint {
 
     function callTestOnlyEndpoint(address _on) external view {
         Harness(_on).t_onlyEndpoint();
+    }
+
+    function directCallReceive(
+        address _on,
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) external {
+        Harness(_on).lzReceive(_srcChainId, _srcAddress, _nonce, _payload);
     }
 
     function getConfig(
