@@ -25,6 +25,13 @@ contract Harness is LzSender, LzReceiver {
 
     constructor(address _lzEndpoint) LzCommon(_lzEndpoint) Ownable(msg.sender) {}
 
+    function t_onlyEndpoint() external view onlyEndpoint {}
+
+    function t_onlyTrustedRemote(
+        uint16 _remoteChainId,
+        bytes calldata _path
+    ) external view onlyTrustedRemote(_remoteChainId, _path) {}
+
     function send(uint16 _dstChainId, bytes memory _payload, bytes memory _adapterParams) external payable {
         (uint estimate, ) = lzEndpoint.estimateFees(_dstChainId, address(this), _payload, false, _adapterParams);
 
