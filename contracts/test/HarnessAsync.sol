@@ -14,10 +14,25 @@ contract HarnessAsync is LzSender, LzReceiverAsync {
         bytes adapterParams;
     }
 
+    bool revertOnReceive;
+
     mapping(uint16 => Message[]) public sent;
     mapping(uint16 => mapping(bytes => mapping(uint64 => bytes))) public received;
 
     constructor(address _lzEndpoint) LzCommon(_lzEndpoint) Ownable(msg.sender) {}
+
+    function setRevertOnReceive(bool _revertOnReceive) external {
+        revertOnReceive = _revertOnReceive;
+    }
+
+    function storeFailedMessage(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        uint64 _nonce,
+        bytes calldata _payload
+    ) external {
+        failedMessages[_srcChainId][_srcAddress][_nonce] = keccak256(_payload);
+    }
 
     function send(uint16 _dstChainId, bytes memory _payload, bytes memory _adapterParams) external payable {
         (uint estimate, ) = lzEndpoint.estimateFees(_dstChainId, address(this), _payload, false, _adapterParams);
@@ -32,6 +47,8 @@ contract HarnessAsync is LzSender, LzReceiverAsync {
         uint64 _nonce,
         bytes memory _payload
     ) internal override {
+        if (revertOnReceive) revert("revertOnReceive");
+
         received[_srcChainId][_srcAddress][_nonce] = _payload;
     }
 }
